@@ -18,7 +18,12 @@ const (
 	questionState
 )
 
-var qna = map[string]string{"what's 1 + 1": "2", "is red a warm colour?": "yes", "what is the best snack": "popcorn"}
+type QNA struct {
+	Question string
+	Answer   string
+}
+
+var qna = []QNA{{Question: "what's 1 + 1", Answer: "2"}, {Question: "is red a warm colour?", Answer: "yes"}, {Question: "what is the best snack", Answer: "popcorn"}}
 var (
 	highlight = lipgloss.AdaptiveColor{Light: "#874BFD", Dark: "#7D56F4"}
 	boxstyle  = lipgloss.NewStyle().
@@ -56,7 +61,16 @@ func (m model) Init() tea.Cmd {
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		if msg.String() == "enter" {
+		switch msg.String() {
+		case "n":
+			// refresh new question and answer
+			i := rand.Int()
+			i = i % len(qna)
+			m.question = qna[i].Question
+			m.answer = qna[i].Answer
+			m.state = questionState
+			m.viewport.SetContent(m.question)
+		case "enter":
 			if m.state == questionState {
 				m.state = answerState
 				m.viewport.SetContent(m.answer)
@@ -64,12 +78,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.state = questionState
 				m.viewport.SetContent(m.question)
 			}
-		}
-		if msg.String() == "ctrl+c" || msg.String() == "q" {
+		case "ctrl+c":
+			fallthrough
+		case "q":
 			return m, tea.Quit
-		}
-		if msg.String() == "n" {
-			// refresh new question and answer
 		}
 	}
 	return m, nil
